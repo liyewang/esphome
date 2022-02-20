@@ -1,0 +1,41 @@
+esphome:
+  name: esphome2
+  platform: ESP32
+  board: esp32doit-devkit-v1
+
+# Enable logging
+logger:
+
+# Example configuration entry
+status_led:
+  pin: 2
+
+# output:
+#   - platform: ledc
+#     id: rtttl_out
+#     pin: 32
+
+sensor:
+  - platform: adc
+    id: adc_1
+    pin: A0
+    attenuation: 2.5db
+    accuracy_decimals: 3
+    update_interval: 1s
+  - platform: template
+    name: UV Index
+    accuracy_decimals: 0
+    update_interval: 1s
+    device_class: illuminance
+    state_class: measurement
+    unit_of_measurement: ""
+  #   icon: mdi:grain
+    lambda: |-
+      if (id(adc_1).state < 1.35770046916203 / 10.5672679410866) {
+        return 0;
+      } else {
+        return id(adc_1).state * 10.5672679410866 - 1.35770046916203;
+      }
+
+# rtttl:
+#   output: rtttl_out

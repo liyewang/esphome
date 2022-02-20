@@ -1,0 +1,158 @@
+substitutions:
+  devicename: esphome1
+
+esphome:
+  name: $devicename
+  platform: ESP32
+  board: esp32doit-devkit-v1
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  fast_connect: true
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: ${devicename} Fallback Hotspot
+    password: !secret ap_pass
+
+captive_portal:
+
+# Enable logging
+logger:
+  level: INFO
+  baud_rate: 0
+
+# Enable Home Assistant API
+api:
+  password: !secret api_pass
+
+ota:
+  password: !secret ota_pass
+
+web_server:
+
+status_led:
+  pin: 2
+
+i2c:
+  id: bus_a
+  sda: 21
+  scl: 22
+  scan: True
+
+uart:
+  - id: bus_b
+    tx_pin: 17
+    rx_pin: 16
+    baud_rate: 9600
+  - id: bus_c
+    rx_pin: 3
+    baud_rate: 9600
+
+# output:
+#   - platform: ledc
+#     id: rtttl_out
+#     pin: 32
+
+sensor:
+  - platform: sht3xd
+    temperature:
+      name: Temperature
+      id: T
+    humidity:
+      name: Humidity
+      id: H
+      device_class: humidity
+    i2c_id: bus_a
+    address: 0x44
+    update_interval: 1s
+  - platform: bmp280
+    temperature:
+      name: BMP280 Temperature
+      oversampling: 16x
+    pressure:
+      name: Pressure
+    address: 0x76
+    update_interval: 1s
+  - platform: sgp30
+    eco2:
+      name: eCO2
+      accuracy_decimals: 0
+    tvoc:
+      name: TVOC
+      accuracy_decimals: 0
+    address: 0x58
+    update_interval: 1s
+  - platform: bh1750
+    name: Illuminance
+    address: 0x23
+    measurement_duration: 254
+    update_interval: 1s
+  - platform: wifi_signal
+    name: WiFi Signal Sensor
+    update_interval: 1s
+  - platform: mhz19
+    co2:
+      name: CO2
+    temperature:
+      name: MH-Z19 Temperature
+    uart_id: bus_b
+    update_interval: 1s
+    automatic_baseline_calibration: false
+  - platform: pmsx003
+    type: PMSX003
+    uart_id: bus_c
+    pm_1_0:
+      name: Particulate Matter <1.0µm Concentration
+    pm_2_5:
+      name: Particulate Matter <2.5µm Concentration
+    pm_10_0:
+      name: Particulate Matter <10.0µm Concentration
+  - platform: adc
+    id: adc_1
+    pin: 36
+    attenuation: 11db
+    accuracy_decimals: 3
+    update_interval: 1s
+  - platform: template
+    name: Combustible Gas
+    accuracy_decimals: 0
+    update_interval: 1s
+    device_class: carbon_monoxide
+    state_class: measurement
+    unit_of_measurement: ppm
+    # icon: mdi:grain
+    icon: mdi:molecule-co
+    lambda: return pow(((356.72892938145003 * (1.3 - 0.005 * id(H).state) * (1 + 0.01 * id(T).state)) / (5 * 1.0 / id(adc_1).state - 1.0)), 1.5831598494221564);
+  - platform: adc
+    id: adc_2
+    pin: 39
+    attenuation: 6db
+    accuracy_decimals: 3
+    update_interval: 1s
+  - platform: template
+    name: Noxious Gas
+    accuracy_decimals: 0
+    update_interval: 1s
+    device_class: sulphur_dioxide
+    state_class: measurement
+    unit_of_measurement: ppm
+    # icon: mdi:grain
+    icon: mdi:molecule-so2
+    lambda: return pow(((77.8709342319244 * (1.3 - 0.005 * id(H).state) * (1 + 0.01 * id(T).state)) / (5 * 1.0 / id(adc_2).state - 1.0)), 2.3389732367593274);
+
+light:
+  - platform: fastled_clockless
+    chipset: WS2812B
+    pin: 4
+    num_leds: 4
+    rgb_order: GRB
+    name: FastLED WS2812B Light
+    effects:
+      - addressable_rainbow:
+          speed: 10
+          width: 10
+
+# rtttl:
+#   output: rtttl_out
