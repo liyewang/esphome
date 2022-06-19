@@ -104,7 +104,6 @@ sensor:
   - platform: bh1750
     name: Illuminance
     address: 0x23
-    measurement_duration: 254
     update_interval: 1s
   - platform: mhz19
     co2:
